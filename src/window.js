@@ -29,6 +29,10 @@ const _ = imports.gettext.gettext;
 const Toolbar = imports.toolbar;
 const Views = imports.view;
 const Player = imports.player;
+const Query = imports.query;
+
+const Tracker = imports.gi.Tracker;
+const tracker = Tracker.SparqlConnection.get (null);
 
 const MainWindow = new Lang.Class({
     Name: "MainWindow",
@@ -63,11 +67,20 @@ const MainWindow = new Lang.Class({
         this._box.pack_start(this._stack, true, true, 0);
         this._box.pack_start(this.player.eventBox, false, false, 0);
         this.add(this._box);
+        let count = -1;
+            let cursor = tracker.query(Query.songs_count, null)
+            if (cursor != null && cursor.next(null))
+                count = cursor.get_integer(0);
+        print("Songs Count: "+count);
 
-        this.views[0] = new Views.Albums(this.toolbar, this.player);
-        this.views[1] = new Views.Artists(this.toolbar, this.player);
-        this.views[2] = new Views.Songs(this.toolbar, this.player);
-        this.views[3] = new Views.Playlists(this.toolbar, this.player);
+        if(count != 0) {
+            this.views[0] = new Views.Albums(this.toolbar, this.player);
+            this.views[1] = new Views.Artists(this.toolbar, this.player);
+            this.views[2] = new Views.Songs(this.toolbar, this.player);
+            this.views[3] = new Views.Playlists(this.toolbar, this.player);
+        } else {
+            this.views[0] = new Views.Empty(this.toolbar)
+        }
 
         for (let i in this.views) {
             this._stack.add_titled(

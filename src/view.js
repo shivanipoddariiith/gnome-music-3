@@ -275,6 +275,18 @@ const ViewContainer = new Lang.Class({
 });
 Signals.addSignalMethods(ViewContainer.prototype);
 
+const Empty = new Lang.Class({
+    Name: "EmptyView",
+
+    _init: function(header_bar){
+        let builder = new Gtk.Builder();
+        builder.add_from_resource('/org/gnome/music/EmptyView.ui');
+        let widget = builder.get_object('container');
+        this.header_bar.setState(1);
+    },
+
+});
+
 const Albums = new Lang.Class({
     Name: "AlbumsView",
     Extends: ViewContainer,
