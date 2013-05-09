@@ -420,7 +420,7 @@ const Artists = new Lang.Class({
             var color = new Gdk.Color({red:10495,green:9727,blue:10495});
         else
             var color = new Gdk.Color({red:55040,green:55808,blue:55040});
-        this.view.get_generic_view().modify_bg(Gtk.StateType.NORMAL,color);
+        this.view.get_generic_view().get_style_context().add_class('artist-panel')
         this.show_all();
 
     },
