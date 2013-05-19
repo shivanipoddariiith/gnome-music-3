@@ -100,6 +100,17 @@ const Grilo = new Lang.Class({
                 Lang.bind(this, callback, null));
     },
 
+    getAllAlbums: function (callback) {
+        var query =  Query.album;
+        var options = Grl.OperationOptions.new(null);
+        options.set_flags (Grl.ResolutionFlags.FULL | Grl.ResolutionFlags.IDLE_RELAY);
+        grilo.tracker.query(
+            query,
+                [Grl.METADATA_KEY_ID, Grl.METADATA_KEY_TITLE, Grl.METADATA_KEY_ARTIST, Grl.METADATA_KEY_CREATION_DATE],
+                options,
+                Lang.bind(this, callback, null));
+    },
+
     _searchCallback: function search_cb () {
         log ("yeah");
     },

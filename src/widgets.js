@@ -264,7 +264,6 @@ const ArtistAlbums = new Lang.Class({
                 GObject.TYPE_BOOLEAN
                 ]);
 
-
         this.pack_start(this.ui.get_object("ArtistAlbumsWidget"), false, false, 0);
         var hbox = new Gtk.Box({orientation: Gtk.Orientation.VERTICAL});
         hbox.set_spacing(48);
@@ -315,6 +314,7 @@ const ArtistAlbums = new Lang.Class({
         return false;
 
     },
+
     cleanModel: function(){
         let [res, iter] = this.model.get_iter_first();
         if (!res)
@@ -328,8 +328,8 @@ const ArtistAlbums = new Lang.Class({
             songWidget.title.set_markup("<span>" + escapedTitle + "</span>");
         } while(this.model.iter_next(iter));
         return false;
+    },
 
-    }
 });
 Signals.addSignalMethods(ArtistAlbums.prototype);
 
@@ -451,6 +451,5 @@ const ArtistAlbumWidget = new Lang.Class({
         this.player.setPlaylist ("Artist", this.album, widget.model, widget.iter, 5);
         this.player.setPlaying(true);
     },
-
 });
 Signals.addSignalMethods(ArtistAlbumWidget.prototype);
