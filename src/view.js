@@ -525,13 +525,15 @@ const Artists = new Lang.Class({
         this._artists = {};
         this.countQuery = Query.artist_count;
         this._artistAlbumsWidget = new Gtk.Frame({
-            shadow_type:    Gtk.ShadowType.NONE
+            shadow_type: Gtk.ShadowType.NONE
         });
         this.view.set_view_type(Gd.MainViewType.LIST);
         this.view.set_hexpand(false);
         this._artistAlbumsWidget.set_hexpand(true);
         this.view.get_style_context().add_class("artist-panel");
         this.view.get_generic_view().get_selection().set_mode(Gtk.SelectionMode.SINGLE);
+        this.albumsCountQuery = Query.album_count;
+        let loadMoreBtn = new LoadMoreButton(this._getRemainingAlbumsCount);
         var scrolledWindow = new Gtk.ScrolledWindow();
         scrolledWindow.set_policy(
             Gtk.PolicyType.NEVER,
@@ -539,11 +541,23 @@ const Artists = new Lang.Class({
         scrolledWindow.add(this._artistAlbumsWidget);
         this._grid.attach(new Gtk.Separator({orientation: Gtk.Orientation.VERTICAL}), 1, 0, 1, 1)
         this._grid.attach(scrolledWindow, 2, 0, 1, 1);
+        this._grid.attach(loadMoreBtn.widget, 2, 1, 1, 1);
         this._addListRenderers();
         if(Gtk.Settings.get_default().gtk_application_prefer_dark_theme)
             this.view.get_generic_view().get_style_context().add_class("artist-panel-dark");
         else
             this.view.get_generic_view().get_style_context().add_class("artist-panel-white");
+        this._albumsOffset = 0;
+        var iter = this._model.append();
+        this._artists["All Artists".toLowerCase()] = {"iter": iter, "albums": []};
+        this._model.set(
+            iter,
+            [0, 1, 2, 3],
+            ["All Artists", "All Artists", "All Artists", "All Artists"]
+        );
+        this.emit("artist-added");
+        this.view.emit('item-activated', "0", this._model.get_path(iter));
+        loadMoreBtn.widget.connect("clicked", Lang.bind(this, this.populateAlbums));
         this.show_all();
 
     },
@@ -572,8 +586,14 @@ const Artists = new Lang.Class({
         var children = this._artistAlbumsWidget.get_children();
         for (var i=0; i<children.length; i++)
             this._artistAlbumsWidget.remove(children[i])
-        var iter = this._model.get_iter (path)[1];
-        var artist = this._model.get_value (iter, 0);
+        if(id == "All Artists") {
+            var artist = "All Artists"
+            this.populateAlbums();
+        }
+        else {
+            var iter = this._model.get_iter (path)[1];
+            var artist = this._model.get_value (iter, 0);
+        }
         var albums = this._artists[artist.toLowerCase()]["albums"]
         this.artistAlbums = new Widgets.ArtistAlbums(artist, albums, this.player);
         this._artistAlbumsWidget.add(this.artistAlbums);
@@ -602,10 +622,33 @@ const Artists = new Lang.Class({
         this.emit("artist-added");
     },
 
+    _addAlbum: function (source, param, album) {
+        this._albumsOffset += 1
+        this._artists["All Artists".toLowerCase()]["albums"].push(album)
+    },
+
     populate: function () {
         if(grilo.tracker != null) {
             grilo.populateArtists(this._offset, Lang.bind(this, this._addItem, null));
             //FIXME: We're emitting this too early, need to wait for all artists to be filled in
         }
+    },
+
+    populateAlbums: function () {
+        if (grilo.tracker != null) 
+            grilo.populateAlbums (this._albumsOffset, Lang.bind(this, function(source, param, album) {
+                this._artists["All Artists".toLowerCase()]["albums"].push(album)
+                this._albumsOffset += 1
+            }));
+    },
+
+    _getRemainingAlbumsCount: function () {
+        let count = -1;
+        if (this.albumsCountQuery != null) {
+            let cursor = tracker.query(this.albumsCountQuery, null)
+            if (cursor != null && cursor.next(null))
+                count = cursor.get_integer(0);
+        }
+        return ( count - this._offset);
     },
 });
