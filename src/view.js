@@ -131,7 +131,7 @@ const ViewContainer = new Lang.Class({
             GObject.TYPE_BOOLEAN
         ]);
         this.view = new Gd.MainView({
-            shadow_type:    Gtk.ShadowType.NONE
+            shadow_type: Gtk.ShadowType.NONE
         });
         this.view.set_view_type(Gd.MainViewType.ICON);
         this.view.set_model(this._model);
@@ -533,7 +533,8 @@ const Artists = new Lang.Class({
         this.view.get_style_context().add_class("artist-panel");
         this.view.get_generic_view().get_selection().set_mode(Gtk.SelectionMode.SINGLE);
         this.albumsCountQuery = Query.album_count;
-        let loadMoreBtn = new LoadMoreButton(this._getRemainingAlbumsCount);
+        this.countQuery = Query.album_count;
+        let loadMoreBtn = new LoadMoreButton(this._getRemainingItemCount);
         var scrolledWindow = new Gtk.ScrolledWindow();
         scrolledWindow.set_policy(
             Gtk.PolicyType.NEVER,
@@ -556,10 +557,9 @@ const Artists = new Lang.Class({
             ["All Artists", "All Artists", "All Artists", "All Artists"]
         );
         this.emit("artist-added");
-        this.view.emit('item-activated', "0", this._model.get_path(iter));
         loadMoreBtn.widget.connect("clicked", Lang.bind(this, this.populateAlbums));
         this.show_all();
-
+        this.view.emit('item-activated', "0", this._model.get_path(iter));
     },
 
     _addListRenderers: function() {
@@ -624,6 +624,8 @@ const Artists = new Lang.Class({
 
     _addAlbum: function (source, param, album) {
         this._albumsOffset += 1
+        if(album == null)
+            return
         this._artists["All Artists".toLowerCase()]["albums"].push(album)
     },
 
@@ -636,12 +638,9 @@ const Artists = new Lang.Class({
 
     populateAlbums: function () {
         if (grilo.tracker != null) 
-            grilo.populateAlbums (this._albumsOffset, Lang.bind(this, function(source, param, album) {
-                this._artists["All Artists".toLowerCase()]["albums"].push(album)
-                this._albumsOffset += 1
-            }));
+            grilo.populateAlbums (this._albumsOffset, Lang.bind(this, this._addAlbum), 10);
     },
-
+/*
     _getRemainingAlbumsCount: function () {
         let count = -1;
         if (this.albumsCountQuery != null) {
@@ -651,4 +650,5 @@ const Artists = new Lang.Class({
         }
         return ( count - this._offset);
     },
+*/
 });
