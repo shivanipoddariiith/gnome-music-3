@@ -548,6 +548,14 @@ const Artists = new Lang.Class({
             this.view.get_generic_view().get_style_context().add_class("artist-panel-dark");
         else
             this.view.get_generic_view().get_style_context().add_class("artist-panel-white");
+        var iter = this._model.append();
+        this._artists["All Artists".toLowerCase()] = {"iter": iter, "albums": []};
+        this._model.set(
+            iter,
+            [0, 1, 2, 3],
+            ["All Artists", "All Artists", "All Artists", "All Artists"]
+        );
+        this.emit("artist-added");
         this.show_all();
 
     },
