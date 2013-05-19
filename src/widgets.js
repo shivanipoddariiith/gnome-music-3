@@ -279,6 +279,13 @@ const ArtistAlbums = new Lang.Class({
         this.emit("albums-loaded");
     },
 
+    pushAlbum: function (album) {
+        let widget = new ArtistAlbumWidget(artist, albums[i], this.player, this.model)
+        this._hbox.pack_start(widget, false, false, 0);
+        this.widgets.push(widget);
+        this.show_all();
+    },
+
     updateModel: function(player, playlist, currentIter){
         //this is not our playlist, return
         if (playlist != this.model){

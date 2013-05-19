@@ -65,23 +65,23 @@ const Grilo = new Lang.Class({
         }
     },
 
-    populateArtists: function (offset, callback, count=50) {
-        this.populateItems (Query.artist, offset, callback, count)
+    populateArtists: function (offset, callback) {
+        this.populateItems (Query.artist, offset, callback)
     },
 
-    populateAlbums: function (offset, callback, count=50) {
-        this.populateItems (Query.album, offset, callback, count)
+    populateAlbums: function (offset, callback) {
+        this.populateItems (Query.album, offset, callback)
     },
 
-    populateSongs: function (offset, callback, count=50) {
-        this.populateItems (Query.songs, offset, callback, count)
+    populateSongs: function (offset, callback) {
+        this.populateItems (Query.songs, offset, callback)
     },
 
-    populateItems: function (query, offset, callback, count) {
+    populateItems: function (query, offset, callback) {
         var options = Grl.OperationOptions.new(null);
         options.set_flags (Grl.ResolutionFlags.FULL | Grl.ResolutionFlags.IDLE_RELAY);
         options.set_skip (offset);
-        options.set_count(count);
+        options.set_count(50);
         grilo.tracker.query(
             query,
                 [Grl.METADATA_KEY_ID, Grl.METADATA_KEY_TITLE, Grl.METADATA_KEY_ARTIST, Grl.METADATA_KEY_CREATION_DATE],

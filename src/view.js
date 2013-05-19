@@ -534,7 +534,7 @@ const Artists = new Lang.Class({
         this.view.get_generic_view().get_selection().set_mode(Gtk.SelectionMode.SINGLE);
         this.albumsCountQuery = Query.album_count;
         this.countQuery = Query.album_count;
-        let loadMoreBtn = new LoadMoreButton(this._getRemainingItemCount);
+        this._loadMoreBtn = new LoadMoreButton(this._getRemainingItemCount);
         var scrolledWindow = new Gtk.ScrolledWindow();
         scrolledWindow.set_policy(
             Gtk.PolicyType.NEVER,
@@ -542,13 +542,14 @@ const Artists = new Lang.Class({
         scrolledWindow.add(this._artistAlbumsWidget);
         this._grid.attach(new Gtk.Separator({orientation: Gtk.Orientation.VERTICAL}), 1, 0, 1, 1)
         this._grid.attach(scrolledWindow, 2, 0, 1, 1);
-        this._grid.attach(loadMoreBtn.widget, 2, 1, 1, 1);
+        this._grid.attach(this._loadMoreBtn.widget, 2, 1, 1, 1);
         this._addListRenderers();
         if(Gtk.Settings.get_default().gtk_application_prefer_dark_theme)
             this.view.get_generic_view().get_style_context().add_class("artist-panel-dark");
         else
             this.view.get_generic_view().get_style_context().add_class("artist-panel-white");
         this._albumsOffset = 0;
+        this._allAlbums = [];
         var iter = this._model.append();
         this._artists["All Artists".toLowerCase()] = {"iter": iter, "albums": []};
         this._model.set(
@@ -557,7 +558,7 @@ const Artists = new Lang.Class({
             ["All Artists", "All Artists", "All Artists", "All Artists"]
         );
         this.emit("artist-added");
-        loadMoreBtn.widget.connect("clicked", Lang.bind(this, this.populateAlbums));
+        this._loadMoreBtn.widget.connect("clicked", Lang.bind(this, this.populateAllAlbums));
         this.show_all();
         this.view.emit('item-activated', "0", this._model.get_path(iter));
     },
@@ -585,16 +586,19 @@ const Artists = new Lang.Class({
     _onItemActivated: function (widget, id, path) {
         var children = this._artistAlbumsWidget.get_children();
         for (var i=0; i<children.length; i++)
-            this._artistAlbumsWidget.remove(children[i])
+            this._artistAlbumsWidget.remove(children[i]);
+        if(id == "All Artists")
+            this._loadMoreBtn.widget.show()
+        else
+            this._loadMoreBtn.widget.hide()
+        var iter = this._model.get_iter (path)[1];
+        var artist = this._model.get_value (iter, 0);
         if(id == "All Artists") {
-            var artist = "All Artists"
-            this.populateAlbums();
+            this.populateAllAlbums();
+            var albums = this._allAlbums;
         }
-        else {
-            var iter = this._model.get_iter (path)[1];
-            var artist = this._model.get_value (iter, 0);
-        }
-        var albums = this._artists[artist.toLowerCase()]["albums"]
+        else
+            var albums = this._artists[artist.toLowerCase()]["albums"];
         this.artistAlbums = new Widgets.ArtistAlbums(artist, albums, this.player);
         this._artistAlbumsWidget.add(this.artistAlbums);
         //this._artistAlbumsWidget.update(artist, albums);
@@ -622,11 +626,14 @@ const Artists = new Lang.Class({
         this.emit("artist-added");
     },
 
-    _addAlbum: function (source, param, album) {
-        this._albumsOffset += 1
-        if(album == null)
-            return
-        this._artists["All Artists".toLowerCase()]["albums"].push(album)
+    _updateAlbums: function () {
+        var children = this._artistAlbumsWidget.get_children();
+        for (var i=0; i<children.length; i++)
+            this._artistAlbumsWidget.remove(children[i]);
+        albums = this._allAlbums;
+        this.artistAlbums = new Widgets.ArtistAlbums(artist, albums, this.player);
+        this._artistAlbumsWidget.add(this.artistAlbums);
+        this.show_all();
     },
 
     populate: function () {
@@ -636,19 +643,14 @@ const Artists = new Lang.Class({
         }
     },
 
-    populateAlbums: function () {
+    populateAllAlbums: function () {
         if (grilo.tracker != null) 
-            grilo.populateAlbums (this._albumsOffset, Lang.bind(this, this._addAlbum), 10);
+            grilo.populateAlbums (this._albumsOffset, Lang.bind(this, function (source, param, album) {
+                this._albumsOffset += 1
+                if(album == null)
+                    return
+                this._allAlbums.push(album);
+        }));
     },
-/*
-    _getRemainingAlbumsCount: function () {
-        let count = -1;
-        if (this.albumsCountQuery != null) {
-            let cursor = tracker.query(this.albumsCountQuery, null)
-            if (cursor != null && cursor.next(null))
-                count = cursor.get_integer(0);
-        }
-        return ( count - this._offset);
-    },
-*/
+
 });
