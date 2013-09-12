@@ -287,8 +287,8 @@ class ViewContainer(Stack):
     def _on_item_activated(self, widget, id, path):
         pass
 
-    def get_selected_track_uris(self):
-        return []
+    def get_selected_track_uris(self, callback):
+        callback([])
 
 
 #Class for the Empty View
@@ -337,12 +337,12 @@ class Albums(ViewContainer):
         if grilo.tracker:
             GLib.idle_add(grilo.populate_albums, self._offset, self._add_item)
 
-    def get_selected_track_uris(self):
+    def get_selected_track_uris(self, callback):
         uris = []
         for path in self._albumWidget.view.get_selection():
             _iter = self._albumWidget.model.get_iter(path)
             uris.append(self._albumWidget.model.get_value(_iter, 5).get_url())
-        return uris
+        callback(uris)
 
 class Songs(ViewContainer):
     def __init__(self, header_bar, selection_toolbar, player):
@@ -494,9 +494,9 @@ class Songs(ViewContainer):
         if grilo.tracker:
             GLib.idle_add(grilo.populate_songs, self._offset, self._add_item)
 
-    def get_selected_track_uris(self):
-        return [self._model.get_value(self._model.get_iter(path), 5).get_url()
-                for path in self.view.get_selection()]
+    def get_selected_track_uris(self, callback):
+        callback([self._model.get_value(self._model.get_iter(path), 5).get_url()
+                  for path in self.view.get_selection()])
 
 
 class Artists (ViewContainer):
@@ -934,3 +934,7 @@ class Playlist(ViewContainer):
     def populate(self):
         for item in sorted(self.playlists_list):
             self._add_playlist_item(item)
+
+    def get_selected_track_uris(self, callback):
+        callback([self._model.get_value(self._model.get_iter(path), 5).get_url()
+                  for path in self.view.get_selection()])
